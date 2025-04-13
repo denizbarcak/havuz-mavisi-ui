@@ -1,116 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProductCard from "../components/product/ProductCard";
 import { FaFilter, FaTimes, FaSort, FaCaretDown } from "react-icons/fa";
-
-// Dummy product data for a category
-const products = [
-  {
-    id: 1,
-    name: "Klor Tabletleri",
-    description: "Havuzunuz için uzun ömürlü klor tabletleri, 5kg paket",
-    price: 450,
-    originalPrice: 550,
-    discount: 18,
-    image:
-      "https://images.unsplash.com/photo-1562763920-8a9f5295d8ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-  {
-    id: 2,
-    name: "Havuz Süpürgesi",
-    description: "Otomatik havuz temizleyici, tüm yüzeyler için uygun",
-    price: 1200,
-    originalPrice: 1200,
-    discount: 0,
-    image:
-      "https://images.unsplash.com/photo-1572331165267-854da2b10ccc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-  {
-    id: 3,
-    name: "Jakuzi Filtresi",
-    description: "Yüksek performanslı jakuzi filtresi, kolay kurulum",
-    price: 180,
-    originalPrice: 220,
-    discount: 18,
-    image:
-      "https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-  {
-    id: 4,
-    name: "Havuz Isıtıcı",
-    description: "Elektrikli havuz ısıtıcı, enerji tasarruflu model",
-    price: 3500,
-    originalPrice: 4000,
-    discount: 12,
-    image:
-      "https://images.unsplash.com/photo-1598302936625-6075fbd98996?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-  {
-    id: 5,
-    name: "pH Ayarlayıcı",
-    description: "Havuz suyunun pH dengesini sağlar, 2L",
-    price: 120,
-    originalPrice: 150,
-    discount: 20,
-    image:
-      "https://images.unsplash.com/photo-1562763920-8a9f5295d8ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-  {
-    id: 6,
-    name: "Yosun Önleyici",
-    description: "Yosun oluşumunu engelleyen etkili formül, 1L",
-    price: 95,
-    originalPrice: 110,
-    discount: 14,
-    image:
-      "https://images.unsplash.com/photo-1562763920-8a9f5295d8ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-  {
-    id: 7,
-    name: "Su Berraklaştırıcı",
-    description: "Bulanık suyu kristal berraklığa kavuşturur, 500ml",
-    price: 75,
-    originalPrice: 75,
-    discount: 0,
-    image:
-      "https://images.unsplash.com/photo-1562763920-8a9f5295d8ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-  {
-    id: 8,
-    name: "Havuz Test Kiti",
-    description: "Havuz suyunun kimyasal değerlerini ölçmek için tam kit",
-    price: 240,
-    originalPrice: 280,
-    discount: 14,
-    image:
-      "https://images.unsplash.com/photo-1562763920-8a9f5295d8ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-  },
-];
+import { getProductsByCategory } from "../services/api";
 
 // Categories for the breadcrumb
 const categories = {
   chemicals: {
     name: "Havuz Kimyasalları",
     breadcrumb: "Havuz Kimyasalları",
+    key: "chemicals",
   },
   cleaning: {
     name: "Havuz Temizlik Malzemesi",
     breadcrumb: "Havuz Temizlik Malzemesi",
+    key: "cleaning",
   },
   construction: {
     name: "Havuz Yapı Malzemeleri",
     breadcrumb: "Havuz Yapı Malzemeleri",
+    key: "construction",
   },
   "sauna-spa": {
     name: "Sauna ve Spa",
     breadcrumb: "Sauna ve Spa",
+    key: "sauna-spa",
   },
   garden: {
     name: "Havuz Bahçe Ürünleri",
     breadcrumb: "Havuz Bahçe Ürünleri",
+    key: "garden",
   },
   "water-systems": {
     name: "Su Arıtma Sistemleri",
     breadcrumb: "Su Arıtma ve Yumuşatma Sistemleri",
+    key: "water-systems",
   },
 };
 
@@ -123,9 +46,75 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
     discount: false,
     inStock: false,
   });
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Get the current category
   const category = categories[categoryId] || categories.chemicals;
+
+  // Fetch products when category changes
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getProductsByCategory(category.key);
+        setProducts(data || []); // Eğer data null ise boş dizi kullan
+      } catch (err) {
+        console.error("Ürünler yüklenirken hata oluştu:", err);
+        setError(
+          "Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
+        );
+        setProducts([]); // Hata durumunda boş dizi kullan
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [categoryId, category.key]);
+
+  // Apply filters and sorting
+  const filteredProducts = Array.isArray(products)
+    ? products
+        .filter((product) => {
+          // Apply price filter
+          const passesPrice =
+            product.price >= priceRange[0] && product.price <= priceRange[1];
+
+          // Apply discount filter if selected
+          const passesDiscount = selectedFilters.discount
+            ? product.originalPrice && product.price < product.originalPrice
+            : true;
+
+          // In a real app, we would check stock here too
+          const passesStock = true;
+
+          return passesPrice && passesDiscount && passesStock;
+        })
+        .sort((a, b) => {
+          // Apply sorting
+          switch (sortBy) {
+            case "price-asc":
+              return a.price - b.price;
+            case "price-desc":
+              return b.price - a.price;
+            case "newest":
+              return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            case "discount":
+              const discountA = a.originalPrice
+                ? ((a.originalPrice - a.price) / a.originalPrice) * 100
+                : 0;
+              const discountB = b.originalPrice
+                ? ((b.originalPrice - b.price) / b.originalPrice) * 100
+                : 0;
+              return discountB - discountA;
+            default:
+              return 0; // Default/featured sorting
+          }
+        })
+    : [];
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -180,7 +169,10 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
                     type="number"
                     value={priceRange[0]}
                     onChange={(e) =>
-                      setPriceRange([parseInt(e.target.value), priceRange[1]])
+                      setPriceRange([
+                        parseInt(e.target.value) || 0,
+                        priceRange[1],
+                      ])
                     }
                     className="w-full p-2 border rounded-md mr-2"
                     placeholder="Min"
@@ -190,7 +182,10 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
                     type="number"
                     value={priceRange[1]}
                     onChange={(e) =>
-                      setPriceRange([priceRange[0], parseInt(e.target.value)])
+                      setPriceRange([
+                        priceRange[0],
+                        parseInt(e.target.value) || 0,
+                      ])
                     }
                     className="w-full p-2 border rounded-md ml-2"
                     placeholder="Max"
@@ -245,90 +240,60 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
                 </div>
               </div>
 
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-colors">
+              <button
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-colors"
+                onClick={() => {
+                  // Filter uygulandı olarak işaretlenebilir
+                }}
+              >
                 Filtrele
               </button>
             </div>
           </div>
 
-          {/* Products Grid */}
+          {/* Products Area */}
           <div className="lg:w-3/4">
-            {/* Sort Controls */}
-            <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm mb-6">
-              <p className="text-gray-600">{products.length} ürün bulundu</p>
-
+            {/* Sort Options */}
+            <div className="bg-white p-4 rounded-lg shadow-sm mb-6 flex justify-between items-center">
               <div className="flex items-center">
-                <label htmlFor="sort" className="mr-2 text-gray-600">
-                  Sırala:
-                </label>
-                <div className="relative">
-                  <select
-                    id="sort"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none bg-white border rounded-md py-2 pl-3 pr-8"
-                  >
-                    <option value="featured">Öne Çıkanlar</option>
-                    <option value="price-low">Fiyat (Düşükten Yükseğe)</option>
-                    <option value="price-high">Fiyat (Yüksekten Düşüğe)</option>
-                    <option value="name">İsim (A-Z)</option>
-                    <option value="discount">İndirim Oranı</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <FaSort className="text-gray-500" />
-                  </div>
-                </div>
+                <FaSort className="text-gray-500 mr-2" />
+                <span className="text-gray-700">Sırala: </span>
+              </div>
+              <div>
+                <select
+                  className="border-none bg-transparent focus:outline-none text-gray-700"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="featured">Öne Çıkanlar</option>
+                  <option value="price-asc">Fiyat (Artan)</option>
+                  <option value="price-desc">Fiyat (Azalan)</option>
+                  <option value="newest">En Yeniler</option>
+                  <option value="discount">İndirim Oranı</option>
+                </select>
               </div>
             </div>
 
-            {/* Products */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <a
-                  key={product.id}
-                  href={`/product/${product.id}`}
-                  className="block"
-                >
-                  <ProductCard product={product} />
-                </a>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center mt-12">
-              <nav className="inline-flex rounded-md shadow">
-                <a
-                  href="#"
-                  className="py-2 px-4 bg-white border border-r-0 border-gray-300 rounded-l-md hover:bg-gray-50"
-                >
-                  Önceki
-                </a>
-                <a
-                  href="#"
-                  className="py-2 px-4 bg-blue-500 text-white border border-blue-500 hover:bg-blue-600"
-                >
-                  1
-                </a>
-                <a
-                  href="#"
-                  className="py-2 px-4 bg-white border border-gray-300 hover:bg-gray-50"
-                >
-                  2
-                </a>
-                <a
-                  href="#"
-                  className="py-2 px-4 bg-white border border-gray-300 hover:bg-gray-50"
-                >
-                  3
-                </a>
-                <a
-                  href="#"
-                  className="py-2 px-4 bg-white border border-l-0 border-gray-300 rounded-r-md hover:bg-gray-50"
-                >
-                  Sonraki
-                </a>
-              </nav>
-            </div>
+            {/* Product Display */}
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : error ? (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {error}
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+                Bu kategoride ürün bulunamadı.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
