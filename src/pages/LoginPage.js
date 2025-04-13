@@ -1,8 +1,66 @@
 import React, { useState } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "" });
+  const [loading, setLoading] = useState(false);
+
+  const { login, register } = useAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage({ text: "", type: "" });
+
+    try {
+      if (isLogin) {
+        // Giriş işlemi
+        const result = await login(email, password);
+        if (!result.success) {
+          setMessage({ text: result.message, type: "error" });
+        }
+      } else {
+        // Kayıt işlemi
+        if (!name || !email || !password) {
+          setMessage({ text: "Tüm alanları doldurunuz", type: "error" });
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 8) {
+          setMessage({
+            text: "Şifre en az 8 karakter olmalıdır",
+            type: "error",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const result = await register(name, email, password);
+        if (result.success) {
+          setMessage({
+            text: "Kayıt başarılı! Şimdi giriş yapabilirsiniz.",
+            type: "success",
+          });
+          setIsLogin(true);
+          setName("");
+          setEmail("");
+          setPassword("");
+        } else {
+          setMessage({ text: result.message, type: "error" });
+        }
+      }
+    } catch (error) {
+      setMessage({ text: "Bir hata oluştu", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 py-12">
@@ -38,7 +96,19 @@ const LoginPage = () => {
               </button>
             </div>
 
-            <form>
+            {message.text && (
+              <div
+                className={`mb-4 p-3 rounded ${
+                  message.type === "error"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
               {!isLogin && (
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-semibold mb-2">
@@ -50,6 +120,8 @@ const LoginPage = () => {
                       type="text"
                       className="w-full focus:outline-none"
                       placeholder="Adınız Soyadınız"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
                   </div>
                 </div>
@@ -65,6 +137,8 @@ const LoginPage = () => {
                     type="email"
                     className="w-full focus:outline-none"
                     placeholder="ornek@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
@@ -79,6 +153,8 @@ const LoginPage = () => {
                     type="password"
                     className="w-full focus:outline-none"
                     placeholder={isLogin ? "••••••••" : "En az 8 karakter"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
               </div>
@@ -102,9 +178,12 @@ const LoginPage = () => {
 
               <button
                 type="submit"
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-md transition-colors"
+                disabled={loading}
+                className={`w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-md transition-colors ${
+                  loading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
               >
-                {isLogin ? "Giriş Yap" : "Kayıt Ol"}
+                {loading ? "İşleniyor..." : isLogin ? "Giriş Yap" : "Kayıt Ol"}
               </button>
             </form>
 

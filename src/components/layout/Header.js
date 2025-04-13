@@ -5,10 +5,18 @@ import {
   FaBars,
   FaTimes,
   FaSearch,
+  FaSignOutAlt,
+  FaAngleDown,
+  FaBoxOpen,
 } from "react-icons/fa";
+import { useAuth } from "../../context/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false);
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const categories = [
     { name: "Havuz Kimyasalları", path: "/category/chemicals" },
@@ -59,24 +67,48 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4">
-            {/* Categories dropdown for desktop */}
-            <div className="relative group">
-              <button className="text-white px-4 py-2 flex items-center">
-                Ürünler
-                <svg
-                  className="ml-2 w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+            {/* Kullanıcı bilgisi veya giriş butonu - ÖNCE */}
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="text-white px-4 py-2 flex items-center"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                  <FaUser className="mr-2" />
+                  <span className="mr-1">Profil</span>
+                  <FaAngleDown size={14} />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-50">
+                    <div className="py-2">
+                      <button
+                        onClick={logout}
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-blue-100"
+                      >
+                        <FaSignOutAlt className="inline mr-2" />
+                        Çıkış Yap
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <a
+                href="/login"
+                className="text-white px-4 py-2 flex items-center"
+              >
+                <FaUser className="mr-2" />
+                Giriş Yap
+              </a>
+            )}
+
+            {/* Categories dropdown for desktop - ORTADA */}
+            <div className="relative group">
+              <button className="text-white px-1 py-2 flex items-center">
+                <FaBoxOpen className="mr-2" />
+                Ürünler
+                <FaAngleDown size={14} className="ml-1" />
               </button>
               <div className="absolute left-0 mt-2 w-60 bg-white shadow-lg rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50">
                 <div className="py-2">
@@ -93,11 +125,7 @@ const Header = () => {
               </div>
             </div>
 
-            <a href="/login" className="text-white px-4 py-2 flex items-center">
-              <FaUser className="mr-2" />
-              Giriş Yap
-            </a>
-
+            {/* Sepetim - EN SONDA */}
             <a href="/cart" className="text-white px-1 py-2 flex items-center">
               <FaShoppingCart className="mr-2" />
               Sepetim
@@ -123,18 +151,37 @@ const Header = () => {
             </div>
 
             <div className="flex flex-col space-y-2">
-              <p className="text-white font-semibold mb-1">Ürünler</p>
-              {categories.map((category, index) => (
-                <a
-                  key={index}
-                  href={category.path}
-                  className="text-white py-2 px-4 block hover:bg-blue-600"
-                >
-                  {category.name}
-                </a>
-              ))}
+              {/* Kullanıcı adı/giriş - ÖNCE */}
+              {user ? (
+                <div>
+                  <button
+                    onClick={() =>
+                      setIsMobileUserMenuOpen(!isMobileUserMenuOpen)
+                    }
+                    className="text-white py-2 px-4 flex items-center justify-between w-full"
+                  >
+                    <div className="flex items-center">
+                      <FaUser className="mr-2" />
+                      <span className="font-medium">Profil</span>
+                    </div>
+                    <FaAngleDown
+                      className={`transform transition-transform duration-200 ${
+                        isMobileUserMenuOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-              <div className="mt-4 pt-4 border-t border-blue-400 flex flex-col space-y-2">
+                  {isMobileUserMenuOpen && (
+                    <button
+                      onClick={logout}
+                      className="text-white py-2 px-4 pl-10 flex items-center w-full bg-blue-600 bg-opacity-30"
+                    >
+                      <FaSignOutAlt className="mr-2" />
+                      Çıkış Yap
+                    </button>
+                  )}
+                </div>
+              ) : (
                 <a
                   href="/login"
                   className="text-white py-2 px-4 flex items-center"
@@ -142,7 +189,44 @@ const Header = () => {
                   <FaUser className="mr-2" />
                   Giriş Yap
                 </a>
+              )}
 
+              {/* Ürünler - ORTADA */}
+              <div className="mt-4 pt-4 border-t border-blue-400">
+                <button
+                  onClick={() =>
+                    setIsMobileCategoriesOpen(!isMobileCategoriesOpen)
+                  }
+                  className="text-white py-2 px-4 flex items-center justify-between w-full"
+                >
+                  <div className="flex items-center">
+                    <FaBoxOpen className="mr-2" />
+                    <span>Ürünler</span>
+                  </div>
+                  <FaAngleDown
+                    className={`transform transition-transform duration-200 ${
+                      isMobileCategoriesOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {isMobileCategoriesOpen && (
+                  <div className="bg-blue-600 bg-opacity-30">
+                    {categories.map((category, index) => (
+                      <a
+                        key={index}
+                        href={category.path}
+                        className="text-white py-2 px-4 pl-8 block hover:bg-blue-600"
+                      >
+                        {category.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sepetim - EN SONDA */}
+              <div className="mt-4 pt-4 border-t border-blue-400">
                 <a
                   href="/cart"
                   className="text-white py-2 px-4 flex items-center"

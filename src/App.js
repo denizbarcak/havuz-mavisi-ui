@@ -1,18 +1,47 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CategoryPage from "./pages/CategoryPage";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import "./App.css";
 
-function App() {
+// Korumalı route komponenti
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Yükleniyor...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+
+// Bu komponent BrowserRouter içinde AuthProvider'ı saracak
+function AppRoutes() {
   return (
-    <Router>
+    <AuthProvider>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={
+            <Layout>
+              <LoginPage />
+            </Layout>
+          }
+        />
         <Route
           path="/"
           element={
@@ -24,9 +53,11 @@ function App() {
         <Route
           path="/cart"
           element={
-            <Layout>
-              <CartPage />
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <CartPage />
+              </Layout>
+            </ProtectedRoute>
           }
         />
         <Route
@@ -103,6 +134,14 @@ function App() {
           }
         />
       </Routes>
+    </AuthProvider>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppRoutes />
     </Router>
   );
 }
