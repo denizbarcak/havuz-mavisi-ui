@@ -6,11 +6,17 @@ import {
   FaArrowLeft,
   FaSpinner,
 } from "react-icons/fa";
-import { getCart, updateCartItem, deleteCartItem } from "../services/api";
+import {
+  getCart,
+  updateCartItem,
+  deleteCartItem,
+  addToCart,
+} from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
+  const [groupedCartItems, setGroupedCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
@@ -40,32 +46,114 @@ const CartPage = () => {
     fetchCart();
   }, [user]);
 
+  // Sepet öğelerini gruplandır (aynı ürünleri birleştir)
+  useEffect(() => {
+    if (!cartItems.length) {
+      setGroupedCartItems([]);
+      return;
+    }
+
+    // Ürünleri gruplandırma fonksiyonu
+    const groupItems = () => {
+      const productMap = new Map();
+
+      // Her bir sepet öğesini dolaş
+      cartItems.forEach((item) => {
+        const productId = item.product_id;
+
+        // Bu ürün daha önce haritaya eklendiyse
+        if (productMap.has(productId)) {
+          const existingItem = productMap.get(productId);
+
+          // Miktarı arttır
+          existingItem.quantity += item.quantity;
+
+          // Sepet öğe ID'lerini koru
+          existingItem.cartItemIds.push(item._id || item.id);
+        } else {
+          // Yeni ürün ekle
+          productMap.set(productId, {
+            ...item,
+            quantity: item.quantity,
+            cartItemIds: [item._id || item.id],
+            // İlk item'ın ID'sini kullan
+            mainCartItemId: item._id || item.id,
+          });
+        }
+      });
+
+      // Map'i diziye dönüştür
+      return Array.from(productMap.values());
+    };
+
+    setGroupedCartItems(groupItems());
+  }, [cartItems]);
+
   // Sepetteki ürün miktarını güncelle
-  const handleUpdateQuantity = async (itemId, newQuantity) => {
+  const handleUpdateQuantity = async (item, newQuantity) => {
     if (newQuantity < 1) return;
 
     try {
-      await updateCartItem(itemId, newQuantity);
-      // Sepeti güncelleme (UI'ı güncelle)
-      setCartItems((prevItems) =>
-        prevItems.map((item) =>
-          item._id === itemId ? { ...item, quantity: newQuantity } : item
+      const currentQuantity = item.quantity;
+
+      if (newQuantity > currentQuantity) {
+        // Ürün ekleme
+        await addToCart(item.product_id, 1);
+      } else {
+        // Ürün çıkarma - en son eklenen ID'yi kullan
+        if (item.cartItemIds && item.cartItemIds.length > 0) {
+          const itemIdToRemove = item.cartItemIds[item.cartItemIds.length - 1];
+          await deleteCartItem(itemIdToRemove);
+        }
+      }
+
+      // UI'daki miktarı güncelle
+      setGroupedCartItems((prev) =>
+        prev.map((cartItem) =>
+          cartItem.mainCartItemId === item.mainCartItemId
+            ? {
+                ...cartItem,
+                quantity: newQuantity,
+                // Ekleme durumunda cartItemIds güncellemesi için bir dummy değer ekleyelim
+                // gerçek ID'ler sonraki yenilemede güncellenecek
+                cartItemIds:
+                  newQuantity > currentQuantity
+                    ? [...cartItem.cartItemIds, "temp-id"]
+                    : cartItem.cartItemIds.slice(0, -1),
+              }
+            : cartItem
         )
       );
+
+      // Sepet güncellendiğinde tüm ürün kartlarını bilgilendir
+      window.dispatchEvent(new Event("cart-updated"));
+
+      // Sepeti tekrar yükleme (tam güncel IDs almak için)
+      const updatedCart = await getCart();
+      setCartItems(updatedCart || []);
     } catch (error) {
       console.error("Miktar güncellenirken hata:", error);
       alert("Ürün miktarı güncellenemedi");
     }
   };
 
-  // Sepetten ürün sil
-  const handleRemoveItem = async (itemId) => {
+  // Sepetten ürün sil (bir üründen tüm miktarları sil)
+  const handleRemoveItem = async (item) => {
     try {
-      await deleteCartItem(itemId);
+      // Bu ürüne ait tüm sepet öğelerini sil
+      for (const cartItemId of item.cartItemIds) {
+        await deleteCartItem(cartItemId);
+      }
+
       // UI'dan ürünü kaldır
-      setCartItems((prevItems) =>
-        prevItems.filter((item) => item._id !== itemId)
+      setGroupedCartItems((prev) =>
+        prev.filter(
+          (cartItem) => cartItem.mainCartItemId !== item.mainCartItemId
+        )
       );
+
+      // Sepet güncellendiğinde tüm ürün kartlarını bilgilendir
+      window.dispatchEvent(new Event("cart-updated"));
     } catch (error) {
       console.error("Ürün silinirken hata:", error);
       alert("Ürün sepetten silinemedi");
@@ -73,7 +161,7 @@ const CartPage = () => {
   };
 
   // Ürün fiyatlarının toplamını hesapla
-  const subtotal = cartItems.reduce((total, item) => {
+  const subtotal = groupedCartItems.reduce((total, item) => {
     // Ürün bilgisi varsa (product alanı varsa veya product dizisi doluysa)
     let productPrice = 0;
     if (item.product) {
@@ -90,7 +178,7 @@ const CartPage = () => {
     return total + productPrice * item.quantity;
   }, 0);
 
-  const shipping = cartItems.length > 0 ? 50 : 0;
+  const shipping = groupedCartItems.length > 0 ? 50 : 0;
   const total = subtotal + shipping;
 
   // Kullanıcı giriş yapmamışsa
@@ -126,7 +214,7 @@ const CartPage = () => {
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
-        ) : cartItems.length === 0 ? (
+        ) : groupedCartItems.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-6 mb-4">
             <p className="text-center py-8">
               Sepetinizde ürün bulunmamaktadır.
@@ -157,7 +245,7 @@ const CartPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {cartItems.map((item) => {
+                    {groupedCartItems.map((item) => {
                       // Ürün bilgisini al - GetCartItems API'den gelen yapı formatına göre
                       let productName = "Ürün bilgisi yüklenemedi";
                       let productPrice = 0;
@@ -184,7 +272,7 @@ const CartPage = () => {
                       }
 
                       return (
-                        <tr key={item._id || item.id} className="border-b">
+                        <tr key={item.mainCartItemId} className="border-b">
                           <td className="py-4 px-2">
                             <div className="flex items-center">
                               <img
@@ -202,10 +290,7 @@ const CartPage = () => {
                               <button
                                 className="bg-gray-200 p-1 rounded-l"
                                 onClick={() =>
-                                  handleUpdateQuantity(
-                                    item._id || item.id,
-                                    item.quantity - 1
-                                  )
+                                  handleUpdateQuantity(item, item.quantity - 1)
                                 }
                               >
                                 <FaMinus className="text-gray-600" size={12} />
@@ -220,10 +305,7 @@ const CartPage = () => {
                               <button
                                 className="bg-gray-200 p-1 rounded-r"
                                 onClick={() =>
-                                  handleUpdateQuantity(
-                                    item._id || item.id,
-                                    item.quantity + 1
-                                  )
+                                  handleUpdateQuantity(item, item.quantity + 1)
                                 }
                               >
                                 <FaPlus className="text-gray-600" size={12} />
@@ -242,9 +324,7 @@ const CartPage = () => {
                           <td className="py-4 px-2 text-center">
                             <button
                               className="text-red-500 hover:text-red-700"
-                              onClick={() =>
-                                handleRemoveItem(item._id || item.id)
-                              }
+                              onClick={() => handleRemoveItem(item)}
                             >
                               <FaTrash />
                             </button>
