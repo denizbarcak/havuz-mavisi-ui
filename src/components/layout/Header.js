@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaShoppingCart,
   FaUser,
@@ -10,13 +10,51 @@ import {
   FaBoxOpen,
 } from "react-icons/fa";
 import { useAuth } from "../../context/AuthContext";
+import { getCart } from "../../services/api";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false);
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const [cartItemCount, setCartItemCount] = useState(0);
   const { user, logout } = useAuth();
+
+  // Sepetteki ürün sayısını takip et
+  useEffect(() => {
+    if (user) {
+      const fetchCartCount = async () => {
+        try {
+          const cartItems = await getCart();
+          if (cartItems && cartItems.length) {
+            const totalItems = cartItems.reduce(
+              (sum, item) => sum + item.quantity,
+              0
+            );
+            setCartItemCount(totalItems);
+          } else {
+            setCartItemCount(0);
+          }
+        } catch (error) {
+          console.error("Sepet sayısı alınırken hata:", error);
+        }
+      };
+
+      fetchCartCount();
+
+      // Sepet güncellendiğinde sayıyı yenile
+      const handleCartUpdate = () => {
+        fetchCartCount();
+      };
+
+      window.addEventListener("cart-updated", handleCartUpdate);
+      return () => {
+        window.removeEventListener("cart-updated", handleCartUpdate);
+      };
+    } else {
+      setCartItemCount(0);
+    }
+  }, [user]);
 
   const categories = [
     { name: "Havuz Kimyasalları", path: "/category/chemicals" },
@@ -66,32 +104,27 @@ const Header = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
+          <nav className="hidden md:flex items-center space-x-2">
             {/* Kullanıcı bilgisi veya giriş butonu - ÖNCE */}
             {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="text-white px-4 py-2 flex items-center"
-                >
+              <div className="relative group">
+                <button className="text-white px-4 py-2 flex items-center">
                   <FaUser className="mr-2" />
                   <span className="mr-1">Profil</span>
                   <FaAngleDown size={14} />
                 </button>
 
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-50">
-                    <div className="py-2">
-                      <button
-                        onClick={logout}
-                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-blue-100"
-                      >
-                        <FaSignOutAlt className="inline mr-2" />
-                        Çıkış Yap
-                      </button>
-                    </div>
+                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300">
+                  <div className="py-2">
+                    <button
+                      onClick={logout}
+                      className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-blue-100"
+                    >
+                      <FaSignOutAlt className="inline mr-2" />
+                      Çıkış Yap
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
             ) : (
               <a
@@ -105,7 +138,7 @@ const Header = () => {
 
             {/* Categories dropdown for desktop - ORTADA */}
             <div className="relative group">
-              <button className="text-white px-1 py-2 flex items-center">
+              <button className="text-white px-4 py-2 flex items-center">
                 <FaBoxOpen className="mr-2" />
                 Ürünler
                 <FaAngleDown size={14} className="ml-1" />
@@ -126,9 +159,14 @@ const Header = () => {
             </div>
 
             {/* Sepetim - EN SONDA */}
-            <a href="/cart" className="text-white px-1 py-2 flex items-center">
+            <a href="/cart" className="text-white px-4 py-2 flex items-center">
               <FaShoppingCart className="mr-2" />
-              Sepetim
+              <span>Sepetim</span>
+              {cartItemCount > 0 && (
+                <div className="ml-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartItemCount}
+                </div>
+              )}
             </a>
           </nav>
         </div>
@@ -232,7 +270,12 @@ const Header = () => {
                   className="text-white py-2 px-4 flex items-center"
                 >
                   <FaShoppingCart className="mr-2" />
-                  Sepetim
+                  <span>Sepetim</span>
+                  {cartItemCount > 0 && (
+                    <div className="ml-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {cartItemCount}
+                    </div>
+                  )}
                 </a>
               </div>
             </div>

@@ -51,14 +51,14 @@ const categories = [
     id: 1,
     name: "Havuz Kimyasalları",
     image:
-      "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      "https://i.pinimg.com/736x/43/33/5c/43335c97ec043b2d9b0fbbdedbeb0e45.jpg",
     path: "/category/chemicals",
   },
   {
     id: 2,
     name: "Havuz Temizlik Malzemesi",
     image:
-      "https://images.unsplash.com/photo-1580087256394-dc596e1c8f4f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      "https://i.pinimg.com/736x/64/0d/19/640d197edd1da2ad0a0a79aa4545ba02.jpg",
     path: "/category/cleaning",
   },
   {
@@ -72,21 +72,21 @@ const categories = [
     id: 4,
     name: "Sauna ve Spa",
     image:
-      "https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      "https://i.pinimg.com/736x/2d/8e/7c/2d8e7cb2f6a2b150596e0d4824e232cc.jpg",
     path: "/category/sauna-spa",
   },
   {
     id: 5,
     name: "Havuz Bahçe Ürünleri",
     image:
-      "https://images.unsplash.com/photo-1567043153527-533b313c4a18?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      "https://i.pinimg.com/736x/3f/3f/ef/3f3fefb3b320bb99213dfb576968396c.jpg",
     path: "/category/garden",
   },
   {
     id: 6,
     name: "Su Arıtma Sistemleri",
     image:
-      "https://images.unsplash.com/photo-1582481725274-d63bdf929a90?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+      "https://i.pinimg.com/736x/59/45/20/594520c7db3717a2900ec4e3766dbd30.jpg",
     path: "/category/water-systems",
   },
 ];
@@ -143,7 +143,7 @@ const HomePage = () => {
                     />
                   </div>
                   <div className="p-4 bg-blue-500 text-white">
-                    <h3 className="font-semibold text-center">
+                    <h3 className="font-semibold text-center whitespace-nowrap overflow-hidden text-ellipsis">
                       {category.name}
                     </h3>
                   </div>
