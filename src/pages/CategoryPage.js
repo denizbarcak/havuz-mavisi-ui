@@ -39,7 +39,7 @@ const categories = {
 
 const CategoryPage = ({ categoryId = "chemicals" }) => {
   // States for filters and sorting
-  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [priceRange, setPriceRange] = useState([0, 300000]);
   const [sortBy, setSortBy] = useState("featured");
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
@@ -121,7 +121,7 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
       <div className="container mx-auto px-4">
         {/* Breadcrumb */}
         <nav className="flex mb-6 text-sm">
-          <a href="/" className="text-gray-500 hover:text-blue-600">
+          <a href="/" className="text-gray-500 hover:text-sky-800">
             Ana Sayfa
           </a>
           <span className="mx-2 text-gray-500">/</span>
@@ -194,7 +194,7 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
                 <input
                   type="range"
                   min="0"
-                  max="5000"
+                  max="300000"
                   value={priceRange[1]}
                   onChange={(e) =>
                     setPriceRange([priceRange[0], parseInt(e.target.value)])
@@ -241,7 +241,7 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
               </div>
 
               <button
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-colors"
+                className="w-full bg-sky-800 hover:bg-sky-900 text-white font-semibold py-2 px-4 rounded-md transition-colors"
                 onClick={() => {
                   // Filter uygulandı olarak işaretlenebilir
                 }}
@@ -277,7 +277,7 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
             {/* Product Display */}
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-800"></div>
               </div>
             ) : error ? (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -288,7 +288,7 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
                 Bu kategoride ürün bulunamadı.
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

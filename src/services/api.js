@@ -2,16 +2,16 @@ const API_URL = "http://localhost:3000/api";
 
 // Kategori anahtarlarını MongoDB'deki kategori isimlerine dönüştür
 const categoryMap = {
-  chemicals: "Havuz Kimyasalları",
-  cleaning: "Havuz Temizlik Malzemesi",
-  construction: "Havuz Yapı Malzemeleri",
-  "sauna-spa": "Sauna ve Spa",
-  garden: "Havuz Bahçe Ürünleri",
-  "water-systems": "Su Arıtma Sistemleri",
+  chemicals: "chemicals",
+  cleaning: "cleaning",
+  construction: "construction",
+  "sauna-spa": "sauna-spa",
+  garden: "garden",
+  "water-systems": "water-systems",
 };
 
 // Yardımcı fetch fonksiyonu
-const fetchApi = async (endpoint, options = {}) => {
+export const fetchApi = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
 
   const defaultHeaders = {
@@ -102,5 +102,20 @@ export const getCartTotal = async () => {
 export const clearCart = async () => {
   return await fetchApi("/cart", {
     method: "DELETE",
+  });
+};
+
+// Öne çıkan (rastgele) ürünleri getir
+export const getFeaturedProducts = async (limit = 4) => {
+  const products = await fetchApi("/products");
+  // Ürünleri karıştır ve istenen sayıda ürün döndür
+  return products.sort(() => Math.random() - 0.5).slice(0, limit);
+};
+
+// Ürün ekleme
+export const createProduct = async (productData) => {
+  return await fetchApi("/products", {
+    method: "POST",
+    body: JSON.stringify(productData),
   });
 };

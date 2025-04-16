@@ -11,6 +11,7 @@ import {
   updateCartItem,
   deleteCartItem,
   addToCart,
+  clearCart,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -181,6 +182,25 @@ const CartPage = () => {
   const shipping = groupedCartItems.length > 0 ? 50 : 0;
   const total = subtotal + shipping;
 
+  const handlePayment = async () => {
+    try {
+      // Sepeti temizle
+      await clearCart();
+
+      // Başarılı ödeme mesajı
+      alert("Ödeme başarılı! Siparişiniz alındı.");
+
+      // Ana sayfaya yönlendir
+      window.location.href = "/";
+
+      // Sepet güncellendiğinde tüm ürün kartlarını bilgilendir
+      window.dispatchEvent(new Event("cart-updated"));
+    } catch (error) {
+      console.error("Ödeme işlemi sırasında hata:", error);
+      alert("Ödeme işlemi sırasında bir hata oluştu");
+    }
+  };
+
   // Kullanıcı giriş yapmamışsa
   if (!user) {
     return (
@@ -190,7 +210,7 @@ const CartPage = () => {
           <div className="bg-white rounded-lg shadow-md p-6 mb-4">
             <p className="text-center py-8">
               Sepetinizi görmek için lütfen{" "}
-              <a href="/login" className="text-blue-500 hover:underline">
+              <a href="/login" className="text-sky-800 hover:underline">
                 giriş yapın
               </a>
               .
@@ -208,7 +228,7 @@ const CartPage = () => {
 
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <FaSpinner className="animate-spin text-blue-500 text-4xl" />
+            <FaSpinner className="animate-spin text-sky-800 text-4xl" />
           </div>
         ) : error ? (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -222,7 +242,7 @@ const CartPage = () => {
             <div className="text-center">
               <a
                 href="/"
-                className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center text-sky-800 hover:text-sky-900"
               >
                 <FaArrowLeft className="mr-2" />
                 Alışverişe Başla
@@ -338,7 +358,7 @@ const CartPage = () => {
 
               <a
                 href="/"
-                className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center text-sky-800 hover:text-sky-900"
               >
                 <FaArrowLeft className="mr-2" />
                 Alışverişe Devam Et
@@ -368,12 +388,15 @@ const CartPage = () => {
 
                 <div className="flex justify-between mb-6">
                   <span className="text-lg font-semibold">Toplam</span>
-                  <span className="text-lg font-bold text-blue-600">
+                  <span className="text-lg font-bold text-sky-800">
                     {total.toLocaleString("tr-TR")} ₺
                   </span>
                 </div>
 
-                <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-md w-full transition-colors">
+                <button
+                  onClick={handlePayment}
+                  className="bg-sky-800 hover:bg-sky-900 text-white font-semibold py-3 px-4 rounded-md w-full transition-colors"
+                >
                   Ödeme Yap
                 </button>
               </div>

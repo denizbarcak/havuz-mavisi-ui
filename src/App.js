@@ -11,11 +11,14 @@ import LoginPage from "./pages/LoginPage";
 import CartPage from "./pages/CartPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import CategoryPage from "./pages/CategoryPage";
+import AddProductPage from "./pages/AddProductPage";
+import EditProductPage from "./pages/EditProductPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import AdminRoute from "./components/auth/AdminRoute";
 import "./App.css";
 
 // Korumalı route komponenti
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -24,6 +27,10 @@ const ProtectedRoute = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/login" />;
+  }
+
+  if (adminOnly && user.role !== "admin") {
+    return <Navigate to="/" />;
   }
 
   return children;
@@ -114,6 +121,22 @@ function AppRoutes() {
             <Layout>
               <CategoryPage categoryId="water-systems" />
             </Layout>
+          }
+        />
+        <Route
+          path="/admin/add-product"
+          element={
+            <AdminRoute>
+              <AddProductPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/edit-product/:id"
+          element={
+            <AdminRoute>
+              <EditProductPage />
+            </AdminRoute>
           }
         />
         <Route

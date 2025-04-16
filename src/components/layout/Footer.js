@@ -125,13 +125,13 @@ const Footer = () => {
             <h3 className="text-xl font-bold mb-4">İletişim</h3>
             <ul className="space-y-3">
               <li className="flex items-start justify-center md:justify-start">
-                <FaMapMarkerAlt className="mt-1 mr-3 text-blue-400" />
+                <FaMapMarkerAlt className="mt-1 mr-3 text-sky-400" />
                 <span className="text-gray-300">
                   Havuz Caddesi No:42, İstanbul, Türkiye
                 </span>
               </li>
               <li className="flex items-center justify-center md:justify-start">
-                <FaPhone className="mr-3 text-blue-400" />
+                <FaPhone className="mr-3 text-sky-400" />
                 <a
                   href="tel:+902121234567"
                   className="text-gray-300 hover:text-white"
@@ -140,7 +140,7 @@ const Footer = () => {
                 </a>
               </li>
               <li className="flex items-center justify-center md:justify-start">
-                <FaEnvelope className="mr-3 text-blue-400" />
+                <FaEnvelope className="mr-3 text-sky-400" />
                 <a
                   href="mailto:info@havuzmavisi.com"
                   className="text-gray-300 hover:text-white"
