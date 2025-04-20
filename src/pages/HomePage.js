@@ -9,6 +9,28 @@ import {
 } from "react-icons/fa";
 import { getFeaturedProducts } from "../services/api";
 
+// Custom hook to track screen width
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return windowSize;
+};
+
 // Categories data
 const categories = [
   {
@@ -59,12 +81,14 @@ const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { width } = useWindowSize();
+  const isMobile = width < 768;
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
         setLoading(true);
-        const products = await getFeaturedProducts(4);
+        const products = await getFeaturedProducts(6);
         setFeaturedProducts(products);
       } catch (err) {
         console.error("Öne çıkan ürünler yüklenirken hata:", err);
@@ -87,16 +111,16 @@ const HomePage = () => {
           style={{
             backgroundImage:
               "url('/images/F098E505-0215-4F96-AAFE-7EE1F8116CC7.jpeg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundSize: isMobile ? "170%" : "cover",
+            backgroundPosition: isMobile ? "center top" : "center",
           }}
         ></div>
-        <div className="container mx-auto px-4 py-24 relative z-10">
+        <div className="container mx-auto px-4 py-16 md:py-24 relative z-10">
           <div className="max-w-2xl">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 md:mb-6">
               Havuz ve Su Sistemleri Uzmanınız
             </h1>
-            <p className="text-xl mb-8">
+            <p className="text-xl mb-6 md:mb-8">
               Kaliteli ürünler, uygun fiyatlar ve uzman desteğiyle havuz, sauna
               ve su arıtma çözümleri
             </p>
@@ -114,7 +138,7 @@ const HomePage = () => {
 
       {/* Categories Section */}
       <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6 sm:px-4">
           <h2 className="text-3xl font-bold text-center mb-12">
             Ürün Kategorilerimiz
           </h2>
@@ -143,15 +167,9 @@ const HomePage = () => {
 
       {/* Featured Products Section */}
       <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-12">
+        <div className="container mx-auto px-6 sm:px-4">
+          <div className="mb-12">
             <h2 className="text-3xl font-bold">Öne Çıkan Ürünler</h2>
-            <a
-              href="/products"
-              className="text-sky-800 hover:text-sky-900 flex items-center"
-            >
-              Tüm ürünleri gör <FaArrowRight className="ml-2" />
-            </a>
           </div>
 
           {loading ? (
@@ -163,18 +181,40 @@ const HomePage = () => {
               {error}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <>
+              {/* Mobil için yatay kaydırılabilir liste */}
+              <div className="sm:hidden overflow-x-auto pb-4 -mx-6">
+                <div
+                  className="flex px-6 space-x-4"
+                  style={{ minWidth: "max-content" }}
+                >
+                  {featuredProducts.map((product) => (
+                    <div key={product.id} className="w-64 flex-shrink-0">
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-center mt-4">
+                  <div className="text-sm text-gray-500">
+                    ← Sağa sola kaydırın →
+                  </div>
+                </div>
+              </div>
+
+              {/* Tablet ve PC ekranlar için standart grid */}
+              <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                {featuredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </section>
 
       {/* Benefits Section */}
       <section className="py-16 bg-sky-50">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6 sm:px-4">
           <h2 className="text-3xl font-bold text-center mb-12">
             Neden Bizi Tercih Etmelisiniz?
           </h2>
@@ -217,9 +257,9 @@ const HomePage = () => {
 
       {/* Newsletter Section */}
       <section className="py-16 bg-sky-800 text-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6 sm:px-4">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">Bültenimize Abone Olun</h2>
+            <h2 className="text-3xl font-bold mb-4">Bizimle İletişime Geçin</h2>
             <p className="mb-8">
               Yeni ürünler, indirimler ve havuz bakımı hakkında ipuçları almak
               için kaydolun.
@@ -235,7 +275,7 @@ const HomePage = () => {
                 type="submit"
                 className="bg-white text-sky-800 px-6 py-3 rounded-md font-semibold hover:bg-gray-100 transition-colors"
               >
-                Abone Ol
+                Gönder
               </button>
             </form>
           </div>

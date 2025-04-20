@@ -1,7 +1,7 @@
 import React from "react";
 import {
   FaFacebook,
-  FaTwitter,
+  FaWhatsapp,
   FaInstagram,
   FaPhone,
   FaEnvelope,
@@ -25,7 +25,7 @@ const Footer = () => {
                 <FaFacebook size={20} />
               </a>
               <a href="#" className="text-gray-300 hover:text-white">
-                <FaTwitter size={20} />
+                <FaWhatsapp size={20} />
               </a>
               <a href="#" className="text-gray-300 hover:text-white">
                 <FaInstagram size={20} />

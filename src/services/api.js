@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000/api";
+const API_URL = "/api";
 
 // Kategori anahtarlarını MongoDB'deki kategori isimlerine dönüştür
 const categoryMap = {
@@ -46,13 +46,19 @@ export const getAllProducts = async () => {
 };
 
 // Kategori bazında ürünleri getir
-export const getProductsByCategory = async (category) => {
+export const getProductsByCategory = async (category, subcategory = null) => {
   // Kategori anahtarını MongoDB'deki gerçek kategori adına dönüştür
   const categoryName = categoryMap[category] || category;
+
+  let url = `/products?category=${encodeURIComponent(categoryName)}`;
+
+  // Alt kategori varsa ekle
+  if (subcategory) {
+    url += `&subcategory=${encodeURIComponent(subcategory)}`;
+  }
+
   // Backend'de kategori bazlı filtreleme endpoint'i kullan
-  return await fetchApi(
-    `/products?category=${encodeURIComponent(categoryName)}`
-  );
+  return await fetchApi(url);
 };
 
 // Ürün detayını getir
@@ -117,5 +123,36 @@ export const createProduct = async (productData) => {
   return await fetchApi("/products", {
     method: "POST",
     body: JSON.stringify(productData),
+  });
+};
+
+// Alt kategorileri getir
+export const getSubCategories = async () => {
+  return await fetchApi(`/subcategories`);
+};
+
+// Belirli bir kategoriye ait alt kategorileri getir
+export const getSubCategoriesByParent = async (category) => {
+  const categoryName = categoryMap[category] || category;
+  return await fetchApi(
+    `/categories/${encodeURIComponent(categoryName)}/subcategories`
+  );
+};
+
+// Yeni alt kategori ekle (admin için)
+export const addSubCategory = async (data) => {
+  return await fetchApi(`/subcategories`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+};
+
+// Alt kategori sil (admin için)
+export const deleteSubCategory = async (id) => {
+  return await fetchApi(`/subcategories/${id}`, {
+    method: "DELETE",
   });
 };

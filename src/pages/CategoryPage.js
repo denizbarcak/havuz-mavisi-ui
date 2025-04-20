@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import ProductCard from "../components/product/ProductCard";
 import { FaFilter, FaTimes, FaSort, FaCaretDown } from "react-icons/fa";
-import { getProductsByCategory } from "../services/api";
+import { useLocation } from "react-router-dom";
+import {
+  getProductsByCategory,
+  getSubCategoriesByParent,
+} from "../services/api";
 
 // Categories for the breadcrumb
 const categories = {
@@ -38,6 +42,11 @@ const categories = {
 };
 
 const CategoryPage = ({ categoryId = "chemicals" }) => {
+  const location = useLocation();
+  // URL'den subcategory parametresini al
+  const queryParams = new URLSearchParams(location.search);
+  const subcategoryFromUrl = queryParams.get("subcategory");
+
   // States for filters and sorting
   const [priceRange, setPriceRange] = useState([0, 300000]);
   const [sortBy, setSortBy] = useState("featured");
@@ -49,17 +58,59 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [subcategories, setSubcategories] = useState([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
 
   // Get the current category
   const category = categories[categoryId] || categories.chemicals;
 
-  // Fetch products when category changes
+  // Fetch subcategories when category changes
+  useEffect(() => {
+    const fetchSubCategories = async () => {
+      if (!categoryId) return;
+
+      try {
+        setSubcategoriesLoading(true);
+        const data = await getSubCategoriesByParent(category.key);
+        setSubcategories(Array.isArray(data) ? data : []);
+
+        // URL'den gelen alt kategori varsa ve alt kategoriler yüklendiyse seç
+        if (subcategoryFromUrl && Array.isArray(data) && data.length > 0) {
+          // Alt kategoriyi bul (id, _id veya slug'a göre)
+          const subcategory = data.find(
+            (sc) =>
+              sc.id === subcategoryFromUrl ||
+              sc._id === subcategoryFromUrl ||
+              sc.slug === subcategoryFromUrl ||
+              encodeURIComponent(sc.name) === subcategoryFromUrl
+          );
+
+          if (subcategory) {
+            setSelectedSubcategory(subcategory.id || subcategory._id);
+          }
+        }
+      } catch (err) {
+        console.error("Alt kategoriler yüklenirken hata oluştu:", err);
+        setSubcategories([]);
+      } finally {
+        setSubcategoriesLoading(false);
+      }
+    };
+
+    fetchSubCategories();
+  }, [categoryId, category.key, subcategoryFromUrl]);
+
+  // Fetch products when category or subcategory changes
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await getProductsByCategory(category.key);
+        const data = await getProductsByCategory(
+          category.key,
+          selectedSubcategory
+        );
         setProducts(data || []); // Eğer data null ise boş dizi kullan
       } catch (err) {
         console.error("Ürünler yüklenirken hata oluştu:", err);
@@ -73,7 +124,20 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
     };
 
     fetchProducts();
-  }, [categoryId, category.key]);
+  }, [categoryId, category.key, selectedSubcategory]);
+
+  // Update URL when subcategory changes
+  useEffect(() => {
+    // URL'yi güncelle (history.pushState kullanarak)
+    const url = new URL(window.location);
+    if (selectedSubcategory) {
+      url.searchParams.set("subcategory", selectedSubcategory);
+    } else {
+      url.searchParams.delete("subcategory");
+    }
+
+    window.history.pushState({}, "", url);
+  }, [selectedSubcategory]);
 
   // Apply filters and sorting
   const filteredProducts = Array.isArray(products)
@@ -116,6 +180,21 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
         })
     : [];
 
+  const handleSubcategoryChange = (subcategoryId) => {
+    setSelectedSubcategory(
+      subcategoryId === selectedSubcategory ? "" : subcategoryId
+    );
+  };
+
+  const resetFilters = () => {
+    setPriceRange([0, 300000]);
+    setSelectedFilters({
+      discount: false,
+      inStock: false,
+    });
+    setSelectedSubcategory("");
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
@@ -126,6 +205,18 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
           </a>
           <span className="mx-2 text-gray-500">/</span>
           <span className="text-gray-800">{category.breadcrumb}</span>
+          {selectedSubcategory && subcategories.length > 0 && (
+            <>
+              <span className="mx-2 text-gray-500">/</span>
+              <span className="text-gray-800">
+                {subcategories.find(
+                  (sub) =>
+                    sub.id === selectedSubcategory ||
+                    sub._id === selectedSubcategory
+                )?.name || ""}
+              </span>
+            </>
+          )}
         </nav>
 
         <h1 className="text-3xl font-bold mb-6">{category.name}</h1>
@@ -160,6 +251,75 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
                   <FaTimes />
                 </button>
               </div>
+
+              {/* Subcategory Filter - Yeni Eklenen Alan */}
+              {subcategories.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold mb-3">Alt Kategoriler</h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {subcategoriesLoading ? (
+                      <div className="text-center py-2">
+                        <div className="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-sky-800"></div>
+                        <span className="ml-2 text-sm text-gray-600">
+                          Yükleniyor...
+                        </span>
+                      </div>
+                    ) : subcategories.length === 0 ? (
+                      <p className="text-sm text-gray-600">
+                        Bu kategoride alt kategori bulunmuyor.
+                      </p>
+                    ) : (
+                      <>
+                        {/* Tüm kategoriler seçeneği */}
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="subcat-all"
+                            checked={selectedSubcategory === ""}
+                            onChange={() => setSelectedSubcategory("")}
+                            className="mr-2"
+                          />
+                          <label
+                            htmlFor="subcat-all"
+                            className="text-sm font-medium cursor-pointer hover:text-sky-800"
+                          >
+                            Tüm {category.name}
+                          </label>
+                        </div>
+
+                        {/* Kategori ayırıcı çizgi */}
+                        <div className="border-t border-gray-200 my-2"></div>
+
+                        {subcategories.map((subcat) => (
+                          <div
+                            key={subcat.id || subcat._id}
+                            className="flex items-center"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`subcat-${subcat.id || subcat._id}`}
+                              checked={
+                                selectedSubcategory ===
+                                (subcat.id || subcat._id)
+                              }
+                              onChange={() =>
+                                handleSubcategoryChange(subcat.id || subcat._id)
+                              }
+                              className="mr-2"
+                            />
+                            <label
+                              htmlFor={`subcat-${subcat.id || subcat._id}`}
+                              className="text-sm cursor-pointer hover:text-sky-800"
+                            >
+                              {subcat.name}
+                            </label>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Price Range Filter */}
               <div className="mb-6">
@@ -240,14 +400,23 @@ const CategoryPage = ({ categoryId = "chemicals" }) => {
                 </div>
               </div>
 
-              <button
-                className="w-full bg-sky-800 hover:bg-sky-900 text-white font-semibold py-2 px-4 rounded-md transition-colors"
-                onClick={() => {
-                  // Filter uygulandı olarak işaretlenebilir
-                }}
-              >
-                Filtrele
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  className="flex-grow bg-sky-800 hover:bg-sky-900 text-white font-semibold py-2 px-4 rounded-md transition-colors"
+                  onClick={() => {
+                    // Filter uygulandı olarak işaretlenebilir
+                  }}
+                >
+                  Filtrele
+                </button>
+
+                <button
+                  className="flex-grow bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md hover:bg-gray-50 transition-colors"
+                  onClick={resetFilters}
+                >
+                  Sıfırla
+                </button>
+              </div>
             </div>
           </div>
 

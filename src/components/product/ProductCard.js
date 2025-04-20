@@ -256,11 +256,13 @@ const ProductCard = ({ product, isPreview = false }) => {
         className={`block relative ${isPreview ? "cursor-default" : ""}`}
         onClick={(e) => isPreview && e.preventDefault()}
       >
-        <img
-          src={imageUrl}
-          alt={product.name}
-          className="w-full h-48 object-cover"
-        />
+        <div className="w-full h-48 bg-gray-50 flex items-center justify-center overflow-hidden">
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="w-full h-full object-contain transform scale-110"
+          />
+        </div>
         {discount > 0 && (
           <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
             %{discount} İndirim
@@ -269,10 +271,10 @@ const ProductCard = ({ product, isPreview = false }) => {
       </a>
 
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">
+        <h3 className="text-sm font-semibold text-gray-800 mb-0.5 line-clamp-1">
           {product.name}
         </h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+        <p className="text-gray-600 text-[10px] mb-2 line-clamp-2">
           {product.description}
         </p>
 
