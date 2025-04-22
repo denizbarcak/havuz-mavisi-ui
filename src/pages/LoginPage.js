@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { FaEnvelope, FaLock, FaUser, FaSync } from "react-icons/fa";
+import {
+  FaEnvelope,
+  FaLock,
+  FaUser,
+  FaSync,
+  FaInfoCircle,
+} from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 
 const LoginPage = () => {
@@ -13,6 +19,12 @@ const LoginPage = () => {
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("");
   const [userCaptcha, setUserCaptcha] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState({
+    length: true,
+    uppercase: true,
+    lowercase: true,
+    symbol: true,
+  });
 
   const { login, register } = useAuth();
 
@@ -29,6 +41,30 @@ const LoginPage = () => {
   // Güvenlik kodunu yenileme
   const refreshCaptcha = () => {
     generateCaptcha();
+  };
+
+  // Şifre validation fonksiyonu
+  const validatePassword = (password) => {
+    const errors = {
+      length: password.length < 8,
+      uppercase: !/[A-Z]/.test(password),
+      lowercase: !/[a-z]/.test(password),
+      symbol: !/[-+_!@#$%^&*.,?]/.test(password),
+    };
+
+    setPasswordErrors(errors);
+
+    // Tüm kuralları karşılıyor mu?
+    return !Object.values(errors).some((error) => error);
+  };
+
+  // Şifre değiştiğinde validation çalıştır
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    if (!isLogin) {
+      validatePassword(newPassword);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -78,8 +114,9 @@ const LoginPage = () => {
           return;
         }
 
-        if (password.length < 8) {
-          setMessage("Şifre en az 8 karakter olmalıdır");
+        // Şifre validasyonu
+        if (!validatePassword(password)) {
+          setMessage("Şifre gereksinimleri karşılanmıyor");
           setLoading(false);
           return;
         }
@@ -194,9 +231,68 @@ const LoginPage = () => {
                     className="w-full focus:outline-none"
                     placeholder={isLogin ? "••••••••" : "En az 8 karakter"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                   />
                 </div>
+
+                {/* Şifre gereksinimleri - Sadece kayıt olma formu için */}
+                {!isLogin && (
+                  <div className="mt-2 text-sm">
+                    <p className="text-gray-700 mb-1 font-medium">
+                      Şifre gereksinimleri:
+                    </p>
+                    <ul className="space-y-1 pl-1">
+                      <li
+                        className={`flex items-center ${
+                          passwordErrors.length
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        <span className="mr-1">
+                          {passwordErrors.length ? "✕" : "✓"}
+                        </span>{" "}
+                        En az 8 karakter
+                      </li>
+                      <li
+                        className={`flex items-center ${
+                          passwordErrors.uppercase
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        <span className="mr-1">
+                          {passwordErrors.uppercase ? "✕" : "✓"}
+                        </span>{" "}
+                        En az bir büyük harf (A-Z)
+                      </li>
+                      <li
+                        className={`flex items-center ${
+                          passwordErrors.lowercase
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        <span className="mr-1">
+                          {passwordErrors.lowercase ? "✕" : "✓"}
+                        </span>{" "}
+                        En az bir küçük harf (a-z)
+                      </li>
+                      <li
+                        className={`flex items-center ${
+                          passwordErrors.symbol
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        <span className="mr-1">
+                          {passwordErrors.symbol ? "✕" : "✓"}
+                        </span>{" "}
+                        En az bir özel karakter (-, +, @, #, $ vb.)
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {showCaptcha && isLogin && (

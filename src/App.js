@@ -13,28 +13,12 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import CategoryPage from "./pages/CategoryPage";
 import AddProductPage from "./pages/AddProductPage";
 import EditProductPage from "./pages/EditProductPage";
+import FavoritesPage from "./pages/FavoritesPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AdminRoute from "./components/auth/AdminRoute";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import StockTrackingPage from "./pages/StockTrackingPage";
 import "./App.css";
-
-// Korumalı route komponenti
-const ProtectedRoute = ({ children, adminOnly = false }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <div>Yükleniyor...</div>;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  if (adminOnly && user.role !== "admin") {
-    return <Navigate to="/" />;
-  }
-
-  return children;
-};
 
 // Bu komponent BrowserRouter içinde AuthProvider'ı saracak
 function AppRoutes() {
@@ -63,6 +47,16 @@ function AppRoutes() {
             <ProtectedRoute>
               <Layout>
                 <CartPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/favorites"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <FavoritesPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -127,7 +121,9 @@ function AppRoutes() {
           path="/admin/add-product"
           element={
             <AdminRoute>
-              <AddProductPage />
+              <Layout>
+                <AddProductPage />
+              </Layout>
             </AdminRoute>
           }
         />
@@ -135,7 +131,19 @@ function AppRoutes() {
           path="/admin/edit-product/:id"
           element={
             <AdminRoute>
-              <EditProductPage />
+              <Layout>
+                <EditProductPage />
+              </Layout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/stock-tracking"
+          element={
+            <AdminRoute>
+              <Layout>
+                <StockTrackingPage />
+              </Layout>
             </AdminRoute>
           }
         />

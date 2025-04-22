@@ -1,12 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { getProductById } from "../services/api";
+import { useParams, Link } from "react-router-dom";
+import { FaShoppingCart, FaCheck, FaMinus, FaHeart } from "react-icons/fa";
+import {
+  getProductById,
+  addToCart,
+  deleteCartItem,
+  getCart,
+  addToFavorites,
+  removeFromFavorites,
+  checkIsFavorite,
+} from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(0);
+  const [cartItemId, setCartItemId] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteId, setFavoriteId] = useState(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -24,6 +40,24 @@ const ProductDetailPage = () => {
 
     fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (user && id) {
+        try {
+          const response = await checkIsFavorite(id);
+          setIsFavorite(response.is_favorite);
+          if (response.is_favorite) {
+            setFavoriteId(response.favorite_id);
+          }
+        } catch (error) {
+          console.error("Favori durumu kontrol edilirken hata:", error);
+        }
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [user, id]);
 
   if (loading) {
     return (
@@ -46,8 +80,35 @@ const ProductDetailPage = () => {
     );
   }
 
+  const toggleFavorite = async () => {
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    setFavoriteLoading(true);
+
+    try {
+      if (isFavorite) {
+        await removeFromFavorites(favoriteId);
+        setIsFavorite(false);
+        setFavoriteId(null);
+      } else {
+        const response = await addToFavorites(id);
+        setIsFavorite(true);
+        if (response.favorite && response.favorite.id) {
+          setFavoriteId(response.favorite.id);
+        }
+      }
+    } catch (error) {
+      console.error("Favori işlemi sırasında hata:", error);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="min-h-screen bg-gray-100 pt-24 pb-12">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumb */}
@@ -66,19 +127,39 @@ const ProductDetailPage = () => {
             <span className="text-gray-800">{product.name}</span>
           </nav>
 
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
-              {/* Ürün Resmi */}
-              <div className="flex items-center justify-center bg-gray-50 rounded-lg p-4">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="md:flex">
+              {/* Product Image */}
+              <div className="md:w-1/2 relative">
                 <img
                   src={product.image_url}
                   alt={product.name}
-                  className="max-w-full h-auto rounded-lg"
+                  className="w-full h-auto md:h-full object-cover"
                 />
+
+                {/* Favori butonu - Üst sağ köşede */}
+                {user && (
+                  <button
+                    onClick={toggleFavorite}
+                    disabled={favoriteLoading}
+                    className={`absolute top-4 right-4 z-10 p-3 rounded-full transition-colors shadow-md ${
+                      favoriteLoading
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : isFavorite
+                        ? "bg-red-500 hover:bg-red-600 text-white"
+                        : "bg-white hover:bg-gray-100 text-gray-500 hover:text-red-500"
+                    }`}
+                    aria-label={
+                      isFavorite ? "Favorilerden çıkar" : "Favorilere ekle"
+                    }
+                  >
+                    <FaHeart size={20} />
+                  </button>
+                )}
               </div>
 
-              {/* Ürün Bilgileri */}
-              <div className="space-y-4">
+              {/* Product Details */}
+              <div className="md:w-1/2 p-6">
                 <h1 className="text-3xl font-bold text-gray-900">
                   {product.name}
                 </h1>

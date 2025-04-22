@@ -2,7 +2,12 @@ import { fetchApi } from "./api";
 
 export const adminApi = {
   deleteProduct: async (productId) => {
-    return await fetchApi(`/admin/products/${productId}`, {
+    const formattedId = String(productId).trim();
+    if (!formattedId) {
+      throw new Error("Geçersiz ürün ID");
+    }
+
+    return await fetchApi(`/admin/products/${formattedId}`, {
       method: "DELETE",
     });
   },

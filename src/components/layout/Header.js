@@ -13,9 +13,13 @@ import {
   FaPlus,
   FaCheck,
   FaTimes as FaTimesCircle,
+  FaClipboardCheck,
+  FaHeart,
+  FaClipboard,
 } from "react-icons/fa";
 import { GrUserAdmin } from "react-icons/gr";
 import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
 import {
   getCart,
   getAllProducts,
@@ -23,7 +27,7 @@ import {
   addSubCategory,
 } from "../../services/api";
 
-const Header = () => {
+const Header = ({ fixedPosition = true }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false);
@@ -396,7 +400,11 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-sky-800 shadow-md fixed top-0 left-0 right-0 z-50">
+    <header
+      className={`bg-sky-800 shadow-md ${
+        fixedPosition ? "fixed top-0 left-0 right-0" : ""
+      } z-50`}
+    >
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-3">
           {/* Logo and Menu Button (Mobile) */}
@@ -466,9 +474,49 @@ const Header = () => {
           {/* Mobile Navigation Icons */}
           <div className="md:hidden flex items-center">
             {user ? (
-              <button className="text-white p-2">
-                <FaUser size={20} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="text-white p-2"
+                >
+                  <FaUser size={20} />
+                </button>
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-50">
+                    <div className="py-2">
+                      <Link
+                        to="/favorites"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaHeart className="inline mr-2 text-sky-700" />
+                        Favoriler
+                      </Link>
+                      <Link
+                        to="/orders"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaClipboard className="inline mr-2 text-sky-700" />
+                        Siparişlerim
+                      </Link>
+                      <Link
+                        to="/account"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaUserCog className="inline mr-2 text-sky-700" />
+                        Hesap Bilgileri
+                      </Link>
+                      <div className="border-t border-gray-200 my-1"></div>
+                      <button
+                        onClick={logout}
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaSignOutAlt className="inline mr-2 text-red-600" />
+                        Çıkış Yap
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <a href="/login" className="text-white p-2">
                 <FaUser size={20} />
@@ -493,19 +541,26 @@ const Header = () => {
                         <FaBoxOpen className="inline mr-2" />
                         Ürün Ekle
                       </a>
+                      <a
+                        href="/admin/stock-tracking"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaClipboardCheck className="inline mr-2" />
+                        Stok Takibi
+                      </a>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <a href="/cart" className="text-white p-2 relative">
+              <Link to="/cart" className="text-white p-2 relative">
                 <FaShoppingCart size={20} />
                 {cartItemCount > 0 && (
                   <div className="absolute top-0 right-0 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center -mt-1 -mr-1">
                     {cartItemCount}
                   </div>
                 )}
-              </a>
+              </Link>
             )}
           </div>
 
@@ -532,11 +587,33 @@ const Header = () => {
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md z-50">
                     <div className="py-2">
+                      <Link
+                        to="/favorites"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaHeart className="inline mr-2 text-sky-700" />
+                        Favoriler
+                      </Link>
+                      <Link
+                        to="/orders"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaClipboard className="inline mr-2 text-sky-700" />
+                        Siparişlerim
+                      </Link>
+                      <Link
+                        to="/account"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaUserCog className="inline mr-2 text-sky-700" />
+                        Hesap Bilgileri
+                      </Link>
+                      <div className="border-t border-gray-200 my-1"></div>
                       <button
                         onClick={logout}
                         className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
                       >
-                        <FaSignOutAlt className="inline mr-2" />
+                        <FaSignOutAlt className="inline mr-2 text-red-600" />
                         Çıkış Yap
                       </button>
                     </div>
@@ -580,13 +657,20 @@ const Header = () => {
                         <FaBoxOpen className="inline mr-2" />
                         Ürün Ekle
                       </a>
+                      <a
+                        href="/admin/stock-tracking"
+                        className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-sky-100"
+                      >
+                        <FaClipboardCheck className="inline mr-2" />
+                        Stok Takibi
+                      </a>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
-              <a
-                href="/cart"
+              <Link
+                to="/cart"
                 className="text-white px-4 py-2 flex items-center"
               >
                 <FaShoppingCart className="mr-2" />
@@ -596,7 +680,7 @@ const Header = () => {
                     {cartItemCount}
                   </div>
                 )}
-              </a>
+              </Link>
             )}
           </nav>
         </div>

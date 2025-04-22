@@ -126,6 +126,32 @@ export const createProduct = async (productData) => {
   });
 };
 
+// FAVORI IŞLEMLERI
+// Favori ürün ekleme
+export const addToFavorites = async (product_id) => {
+  return await fetchApi("/favorites", {
+    method: "POST",
+    body: JSON.stringify({ product_id }),
+  });
+};
+
+// Favori ürünleri getir
+export const getFavorites = async () => {
+  return await fetchApi("/favorites/products");
+};
+
+// Favori ürünü sil
+export const removeFromFavorites = async (favoriteId) => {
+  return await fetchApi(`/favorites/${favoriteId}`, {
+    method: "DELETE",
+  });
+};
+
+// Bir ürünün favori olup olmadığını kontrol et
+export const checkIsFavorite = async (productId) => {
+  return await fetchApi(`/favorites/check/${productId}`);
+};
+
 // Alt kategorileri getir
 export const getSubCategories = async () => {
   return await fetchApi(`/subcategories`);
@@ -137,6 +163,11 @@ export const getSubCategoriesByParent = async (category) => {
   return await fetchApi(
     `/categories/${encodeURIComponent(categoryName)}/subcategories`
   );
+};
+
+// Tüm alt kategorileri getir
+export const getAllSubCategories = async () => {
+  return await fetchApi(`/subcategories`);
 };
 
 // Yeni alt kategori ekle (admin için)
